@@ -37,13 +37,15 @@ public final class ActivityRefWatcher {
 
   public static void install(@NonNull Context context, @NonNull RefWatcher refWatcher) {
     Application application = (Application) context.getApplicationContext();
+	//创建一个对于Activity的弱引用监听类
     ActivityRefWatcher activityRefWatcher = new ActivityRefWatcher(application, refWatcher);
-
+	//注册一个对于Activity的生命周期监听函数
     application.registerActivityLifecycleCallbacks(activityRefWatcher.lifecycleCallbacks);
   }
 
   private final Application.ActivityLifecycleCallbacks lifecycleCallbacks =
       new ActivityLifecycleCallbacksAdapter() {
+        //只监听destory方法，将调用destory的activity添加到监听watcher中
         @Override public void onActivityDestroyed(Activity activity) {
           refWatcher.watch(activity);
         }
