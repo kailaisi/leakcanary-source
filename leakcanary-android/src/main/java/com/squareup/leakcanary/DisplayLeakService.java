@@ -30,12 +30,12 @@ import static com.squareup.leakcanary.LeakCanary.leakInfo;
 import static com.squareup.leakcanary.internal.LeakCanaryInternals.classSimpleName;
 
 /**
- * Logs leak analysis results, and then shows a notification which will start {@link
- * DisplayLeakActivity}.
+ * Logs leak analysis results, and then shows a notification which will start {@link DisplayLeakActivity}.
  * <p>
  * You can extend this class and override {@link #afterDefaultHandling(HeapDump, AnalysisResult,
  * String)} to add custom behavior, e.g. uploading the heap dump.
  */
+//用于记录泄漏的结果。然后通过DisplayLeakActivity显示一条通知消息
 public class DisplayLeakService extends AbstractAnalysisResultService {
 
   @Override

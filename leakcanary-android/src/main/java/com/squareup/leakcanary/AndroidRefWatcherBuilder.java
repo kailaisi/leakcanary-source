@@ -32,6 +32,7 @@ public final class AndroidRefWatcherBuilder extends RefWatcherBuilder<AndroidRef
   public @NonNull AndroidRefWatcherBuilder listenerServiceClass(
       @NonNull Class<? extends AbstractAnalysisResultService> listenerServiceClass) {
     enableDisplayLeakActivity = DisplayLeakService.class.isAssignableFrom(listenerServiceClass);
+    //创建一个服务，来进行堆栈的监听
     return heapDumpListener(new ServiceHeapDumpListener(context, listenerServiceClass));
   }
 
