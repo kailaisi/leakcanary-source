@@ -145,6 +145,7 @@ public final class LeakCanaryInternals {
     return myProcess.processName.equals(serviceInfo.processName);
   }
 
+  //创建一个Notification并显示
   public static void showNotification(Context context, CharSequence contentTitle,
       CharSequence contentText, PendingIntent pendingIntent, int notificationId) {
     Notification.Builder builder = new Notification.Builder(context)

@@ -36,138 +36,153 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  */
 public final class RefWatcher {
 
-  public static final RefWatcher DISABLED = new RefWatcherBuilder<>().build();
+    public static final RefWatcher DISABLED = new RefWatcherBuilder<>().build();
 
-  private final WatchExecutor watchExecutor;
-  private final DebuggerControl debuggerControl;
-  private final GcTrigger gcTrigger;
-  private final HeapDumper heapDumper;
-  private final HeapDump.Listener heapdumpListener;
-  private final HeapDump.Builder heapDumpBuilder;
-  private final Set<String> retainedKeys;
-  private final ReferenceQueue<Object> queue;
+    private final WatchExecutor watchExecutor;
+    private final DebuggerControl debuggerControl;
+    private final GcTrigger gcTrigger;
+    private final HeapDumper heapDumper;
+    private final HeapDump.Listener heapdumpListener;
+    private final HeapDump.Builder heapDumpBuilder;
+    private final Set<String> retainedKeys;
+    private final ReferenceQueue<Object> queue;
 
-  RefWatcher(WatchExecutor watchExecutor, DebuggerControl debuggerControl, GcTrigger gcTrigger,
-      HeapDumper heapDumper, HeapDump.Listener heapdumpListener, HeapDump.Builder heapDumpBuilder) {
-    this.watchExecutor = checkNotNull(watchExecutor, "watchExecutor");
-    this.debuggerControl = checkNotNull(debuggerControl, "debuggerControl");
-    this.gcTrigger = checkNotNull(gcTrigger, "gcTrigger");
-    this.heapDumper = checkNotNull(heapDumper, "heapDumper");
-    this.heapdumpListener = checkNotNull(heapdumpListener, "heapdumpListener");
-    this.heapDumpBuilder = heapDumpBuilder;
-    retainedKeys = new CopyOnWriteArraySet<>();
-    queue = new ReferenceQueue<>();
-  }
-
-  /**
-   * Identical to {@link #watch(Object, String)} with an empty string reference name.
-   *
-   * @see #watch(Object, String)
-   */
-  public void watch(Object watchedReference) {
-    watch(watchedReference, "");
-  }
-
-  /**
-   * Watches the provided references and checks if it can be GCed. This method is non blocking,
-   * the check is done on the {@link WatchExecutor} this {@link RefWatcher} has been constructed
-   * with.
-   *
-   * @param referenceName An logical identifier for the watched object.
-   */
-  public void watch(Object watchedReference, String referenceName) {
-    if (this == DISABLED) {
-      return;
+    RefWatcher(WatchExecutor watchExecutor, DebuggerControl debuggerControl, GcTrigger gcTrigger,
+               HeapDumper heapDumper, HeapDump.Listener heapdumpListener, HeapDump.Builder heapDumpBuilder) {
+        this.watchExecutor = checkNotNull(watchExecutor, "watchExecutor");
+        this.debuggerControl = checkNotNull(debuggerControl, "debuggerControl");
+        this.gcTrigger = checkNotNull(gcTrigger, "gcTrigger");
+        this.heapDumper = checkNotNull(heapDumper, "heapDumper");
+        this.heapdumpListener = checkNotNull(heapdumpListener, "heapdumpListener");
+        this.heapDumpBuilder = heapDumpBuilder;
+        retainedKeys = new CopyOnWriteArraySet<>();
+        queue = new ReferenceQueue<>();
     }
-    checkNotNull(watchedReference, "watchedReference");
-    checkNotNull(referenceName, "referenceName");
-    final long watchStartNanoTime = System.nanoTime();
-    String key = UUID.randomUUID().toString();
-    retainedKeys.add(key);
-    final KeyedWeakReference reference =
-        new KeyedWeakReference(watchedReference, key, referenceName, queue);
 
-    ensureGoneAsync(watchStartNanoTime, reference);
-  }
-
-  /**
-   * LeakCanary will stop watching any references that were passed to {@link #watch(Object, String)}
-   * so far.
-   */
-  public void clearWatchedReferences() {
-    retainedKeys.clear();
-  }
-
-  boolean isEmpty() {
-    removeWeaklyReachableReferences();
-    return retainedKeys.isEmpty();
-  }
-
-  HeapDump.Builder getHeapDumpBuilder() {
-    return heapDumpBuilder;
-  }
-
-  Set<String> getRetainedKeys() {
-    return new HashSet<>(retainedKeys);
-  }
-
-  private void ensureGoneAsync(final long watchStartNanoTime, final KeyedWeakReference reference) {
-    watchExecutor.execute(new Retryable() {
-      @Override public Retryable.Result run() {
-        return ensureGone(reference, watchStartNanoTime);
-      }
-    });
-  }
-
-  @SuppressWarnings("ReferenceEquality") // Explicitly checking for named null.
-  Retryable.Result ensureGone(final KeyedWeakReference reference, final long watchStartNanoTime) {
-    long gcStartNanoTime = System.nanoTime();
-    long watchDurationMs = NANOSECONDS.toMillis(gcStartNanoTime - watchStartNanoTime);
-
-    removeWeaklyReachableReferences();
-
-    if (debuggerControl.isDebuggerAttached()) {
-      // The debugger can create false leaks.
-      return RETRY;
+    /**
+     * Identical to {@link #watch(Object, String)} with an empty string reference name.
+     *
+     * @see #watch(Object, String)
+     */
+    public void watch(Object watchedReference) {
+        watch(watchedReference, "");
     }
-    if (gone(reference)) {
-      return DONE;
+
+    /**
+     * Watches the provided references and checks if it can be GCed. This method is non blocking,
+     * the check is done on the {@link WatchExecutor} this {@link RefWatcher} has been constructed
+     * with.
+     *
+     * @param referenceName An logical identifier for the watched object.
+     */
+    public void watch(Object watchedReference, String referenceName) {
+        if (this == DISABLED) {
+            return;
+        }
+        //保证watch的对象不为空
+        checkNotNull(watchedReference, "watchedReference");
+        checkNotNull(referenceName, "referenceName");
+        final long watchStartNanoTime = System.nanoTime();
+        //创建一个UUID
+        String key = UUID.randomUUID().toString();
+        //将UUID保存到set中
+        retainedKeys.add(key);
+        //创建一个弱引用，指向要检测的对象。
+        //如果这个弱引用被回收，那么会将reference加入到queue队列中
+        final KeyedWeakReference reference = new KeyedWeakReference(watchedReference, key, referenceName, queue);
+        //判断reference是否被回收
+        ensureGoneAsync(watchStartNanoTime, reference);
     }
-    gcTrigger.runGc();
-    removeWeaklyReachableReferences();
-    if (!gone(reference)) {
-      long startDumpHeap = System.nanoTime();
-      long gcDurationMs = NANOSECONDS.toMillis(startDumpHeap - gcStartNanoTime);
 
-      File heapDumpFile = heapDumper.dumpHeap();
-      if (heapDumpFile == RETRY_LATER) {
-        // Could not dump the heap.
-        return RETRY;
-      }
-      long heapDumpDurationMs = NANOSECONDS.toMillis(System.nanoTime() - startDumpHeap);
-
-      HeapDump heapDump = heapDumpBuilder.heapDumpFile(heapDumpFile).referenceKey(reference.key)
-          .referenceName(reference.name)
-          .watchDurationMs(watchDurationMs)
-          .gcDurationMs(gcDurationMs)
-          .heapDumpDurationMs(heapDumpDurationMs)
-          .build();
-
-      heapdumpListener.analyze(heapDump);
+    /**
+     * LeakCanary will stop watching any references that were passed to {@link #watch(Object, String)}
+     * so far.
+     */
+    public void clearWatchedReferences() {
+        retainedKeys.clear();
     }
-    return DONE;
-  }
 
-  private boolean gone(KeyedWeakReference reference) {
-    return !retainedKeys.contains(reference.key);
-  }
-
-  private void removeWeaklyReachableReferences() {
-    // WeakReferences are enqueued as soon as the object to which they point to becomes weakly
-    // reachable. This is before finalization or garbage collection has actually happened.
-    KeyedWeakReference ref;
-    while ((ref = (KeyedWeakReference) queue.poll()) != null) {
-      retainedKeys.remove(ref.key);
+    boolean isEmpty() {
+        removeWeaklyReachableReferences();
+        return retainedKeys.isEmpty();
     }
-  }
+
+    HeapDump.Builder getHeapDumpBuilder() {
+        return heapDumpBuilder;
+    }
+
+    Set<String> getRetainedKeys() {
+        return new HashSet<>(retainedKeys);
+    }
+
+    //判断reference是否被回收
+    @SuppressWarnings("ReferenceEquality")
+    // Explicitly checking for named null.
+    Retryable.Result ensureGone(final KeyedWeakReference reference, final long watchStartNanoTime) {
+        long gcStartNanoTime = System.nanoTime();
+        long watchDurationMs = NANOSECONDS.toMillis(gcStartNanoTime - watchStartNanoTime);
+        //移除已经回收的监控对象
+        removeWeaklyReachableReferences();
+
+        if (debuggerControl.isDebuggerAttached()) {
+            // The debugger can create false leaks.
+            return RETRY;
+        }
+        //监控对象已经回收了，直接返回Done
+        if (gone(reference)) {
+            return DONE;
+        }
+        //执行一次垃圾回收
+        gcTrigger.runGc();
+        //再次移除已经回收的监控对象
+        removeWeaklyReachableReferences();
+        if (!gone(reference)) {
+            //如果仍然没有回收
+            long startDumpHeap = System.nanoTime();
+            long gcDurationMs = NANOSECONDS.toMillis(startDumpHeap - gcStartNanoTime);
+            //dump出Head文件
+            File heapDumpFile = heapDumper.dumpHeap();
+            if (heapDumpFile == RETRY_LATER) {
+                // Could not dump the heap.
+                //不能生成快照文件的话，进行重试
+                return RETRY;
+            }
+            //生成文件消耗的的时间
+            long heapDumpDurationMs = NANOSECONDS.toMillis(System.nanoTime() - startDumpHeap);
+            HeapDump heapDump = heapDumpBuilder.heapDumpFile(heapDumpFile).referenceKey(reference.key)
+                    .referenceName(reference.name)
+                    .watchDurationMs(watchDurationMs)
+                    .gcDurationMs(gcDurationMs)
+                    .heapDumpDurationMs(heapDumpDurationMs)
+                    .build();
+            //分析堆内存，heapdumpListener默认是ServiceHeapDumpListener
+            heapdumpListener.analyze(heapDump);
+        }
+        return DONE;
+    }
+
+    private void ensureGoneAsync(final long watchStartNanoTime, final KeyedWeakReference reference) {
+        watchExecutor.execute(new Retryable() {
+            @Override
+            public Retryable.Result run() {
+                return ensureGone(reference, watchStartNanoTime);
+            }
+        });
+    }
+
+    //判断监控的对象是否已经回收 true:已经回收
+    private boolean gone(KeyedWeakReference reference) {
+        return !retainedKeys.contains(reference.key);
+    }
+
+    private void removeWeaklyReachableReferences() {
+        // WeakReferences are enqueued as soon as the object to which they point to becomes weakly
+        // reachable. This is before finalization or garbage collection has actually happened.
+        KeyedWeakReference ref;
+        //循环queue
+        while ((ref = (KeyedWeakReference) queue.poll()) != null) {
+            //在queue中的ref，说明已经被回收了，所以直接将其对应的key从retainedKeys移除。
+            retainedKeys.remove(ref.key);
+        }
+    }
 }

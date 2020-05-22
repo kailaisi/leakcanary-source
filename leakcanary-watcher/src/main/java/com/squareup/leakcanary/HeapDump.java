@@ -58,6 +58,7 @@ public final class HeapDump implements Serializable {
   public final String referenceName;
 
   /** References that should be ignored when analyzing this heap dump. */
+  //忽略的引用
   public final ExcludedRefs excludedRefs;
 
   /** Time from the request to watch the reference until the GC was triggered. */

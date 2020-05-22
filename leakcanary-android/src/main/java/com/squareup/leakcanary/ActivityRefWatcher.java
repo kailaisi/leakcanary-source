@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.support.annotation.NonNull;
+
 import com.squareup.leakcanary.internal.ActivityLifecycleCallbacksAdapter;
 
 /**
@@ -26,46 +27,48 @@ import com.squareup.leakcanary.internal.ActivityLifecycleCallbacksAdapter;
  * {@link AndroidRefWatcherBuilder#watchActivities} should be used instead.
  * We will make this class internal in the next major version.
  */
+//用于处理对于Activity的处理
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public final class ActivityRefWatcher {
 
-  public static void installOnIcsPlus(@NonNull Application application,
-      @NonNull RefWatcher refWatcher) {
-    install(application, refWatcher);
-  }
+    public static void installOnIcsPlus(@NonNull Application application,
+                                        @NonNull RefWatcher refWatcher) {
+        install(application, refWatcher);
+    }
 
-  public static void install(@NonNull Context context, @NonNull RefWatcher refWatcher) {
-    Application application = (Application) context.getApplicationContext();
-	//创建一个对于Activity的弱引用监听类
-    ActivityRefWatcher activityRefWatcher = new ActivityRefWatcher(application, refWatcher);
-	//注册一个对于Activity的生命周期监听函数
-    application.registerActivityLifecycleCallbacks(activityRefWatcher.lifecycleCallbacks);
-  }
+    public static void install(@NonNull Context context, @NonNull RefWatcher refWatcher) {
+        Application application = (Application) context.getApplicationContext();
+        //创建一个对于Activity的弱引用监听类
+        ActivityRefWatcher activityRefWatcher = new ActivityRefWatcher(application, refWatcher);
+        //对传入的应用的Application注册一个对于Activity的生命周期监听函数
+        application.registerActivityLifecycleCallbacks(activityRefWatcher.lifecycleCallbacks);
+    }
 
-  private final Application.ActivityLifecycleCallbacks lifecycleCallbacks =
-      new ActivityLifecycleCallbacksAdapter() {
-        //只监听destory方法，将调用destory的activity添加到监听watcher中
-        @Override public void onActivityDestroyed(Activity activity) {
-          refWatcher.watch(activity);
-        }
-      };
+    private final Application.ActivityLifecycleCallbacks lifecycleCallbacks =
+            new ActivityLifecycleCallbacksAdapter() {
+                //只监听destory方法，将调用destory的activity添加到监听watcher中
+                @Override
+                public void onActivityDestroyed(Activity activity) {
+                    refWatcher.watch(activity);
+                }
+            };
 
-  private final Application application;
-  private final RefWatcher refWatcher;
+    private final Application application;
+    private final RefWatcher refWatcher;
 
-  private ActivityRefWatcher(Application application, RefWatcher refWatcher) {
-    this.application = application;
-    this.refWatcher = refWatcher;
-  }
+    private ActivityRefWatcher(Application application, RefWatcher refWatcher) {
+        this.application = application;
+        this.refWatcher = refWatcher;
+    }
 
-  public void watchActivities() {
-    // Make sure you don't get installed twice.
-    stopWatchingActivities();
-    application.registerActivityLifecycleCallbacks(lifecycleCallbacks);
-  }
+    public void watchActivities() {
+        // Make sure you don't get installed twice.
+        stopWatchingActivities();
+        application.registerActivityLifecycleCallbacks(lifecycleCallbacks);
+    }
 
-  public void stopWatchingActivities() {
-    application.unregisterActivityLifecycleCallbacks(lifecycleCallbacks);
-  }
+    public void stopWatchingActivities() {
+        application.unregisterActivityLifecycleCallbacks(lifecycleCallbacks);
+    }
 }

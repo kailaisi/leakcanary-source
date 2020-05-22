@@ -36,7 +36,7 @@ import com.squareup.leakcanary.internal.LeakCanaryInternals;
 import java.io.File;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-
+//Android使用的HeapDumper
 public final class AndroidHeapDumper implements HeapDumper {
 
   private final Context context;
@@ -68,9 +68,11 @@ public final class AndroidHeapDumper implements HeapDumper {
   @SuppressWarnings("ReferenceEquality") // Explicitly checking for named null.
   @Override @Nullable
   public File dumpHeap() {
+    //创建一个.hrof文件
     File heapDumpFile = leakDirectoryProvider.newHeapDumpFile();
 
     if (heapDumpFile == RETRY_LATER) {
+      //创建失败了，等会再重试
       return RETRY_LATER;
     }
 
@@ -81,17 +83,17 @@ public final class AndroidHeapDumper implements HeapDumper {
       CanaryLog.d("Did not dump heap, too much time waiting for Toast.");
       return RETRY_LATER;
     }
-
+    //创建一个Notification通知
     Notification.Builder builder = new Notification.Builder(context)
         .setContentTitle(context.getString(R.string.leak_canary_notification_dumping));
     Notification notification = LeakCanaryInternals.buildNotification(context, builder);
-    NotificationManager notificationManager =
-        (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
     int notificationId = (int) SystemClock.uptimeMillis();
     notificationManager.notify(notificationId, notification);
 
     Toast toast = waitingForToast.get();
     try {
+      //heap堆的快照，可以获知程序的哪些部分正在使用大部分的内存
       Debug.dumpHprofData(heapDumpFile.getAbsolutePath());
       cancelToast(toast);
       notificationManager.cancel(notificationId);

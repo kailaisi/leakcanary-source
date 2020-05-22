@@ -40,7 +40,7 @@ import static com.squareup.leakcanary.HeapDumper.RETRY_LATER;
 import static com.squareup.leakcanary.internal.LeakCanaryInternals.showNotification;
 
 public final class DefaultLeakDirectoryProvider implements LeakDirectoryProvider {
-
+  //默认最多创建7个Dump文件
   private static final int DEFAULT_MAX_STORED_HEAP_DUMPS = 7;
 
   private static final String HPROF_SUFFIX = ".hprof";

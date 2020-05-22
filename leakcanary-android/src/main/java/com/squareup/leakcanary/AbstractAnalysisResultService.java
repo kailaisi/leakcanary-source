@@ -38,11 +38,12 @@ public abstract class AbstractAnalysisResultService extends ForegroundService {
       throw new RuntimeException(e);
     }
     Intent intent = new Intent(context, listenerServiceClass);
-
+    //将结果保存到文件
     File analyzedHeapFile = AnalyzedHeap.save(heapDump, result);
     if (analyzedHeapFile != null) {
       intent.putExtra(ANALYZED_HEAP_PATH_EXTRA, analyzedHeapFile.getAbsolutePath());
     }
+    //启动服务，然后传递内存泄漏分析的结果文件所对应的位置
     ContextCompat.startForegroundService(context, intent);
   }
 
@@ -51,22 +52,26 @@ public abstract class AbstractAnalysisResultService extends ForegroundService {
         R.string.leak_canary_notification_reporting);
   }
 
+  //启动服务的时候，会调用这个方法，进行结果的分析
   @Override protected final void onHandleIntentInForeground(@Nullable Intent intent) {
     if (intent == null) {
       CanaryLog.d("AbstractAnalysisResultService received a null intent, ignoring.");
       return;
     }
+    //如果没有结果所对应的文件保存的位置，则分析失败
     if (!intent.hasExtra(ANALYZED_HEAP_PATH_EXTRA)) {
       onAnalysisResultFailure(getString(R.string.leak_canary_result_failure_no_disk_space));
       return;
     }
     File analyzedHeapFile = new File(intent.getStringExtra(ANALYZED_HEAP_PATH_EXTRA));
+    //加载内存泄漏的堆信息
     AnalyzedHeap analyzedHeap = AnalyzedHeap.load(analyzedHeapFile);
     if (analyzedHeap == null) {
       onAnalysisResultFailure(getString(R.string.leak_canary_result_failure_no_file));
       return;
     }
     try {
+      //进行堆信息的分析
       onHeapAnalyzed(analyzedHeap);
     } finally {
       //noinspection ResultOfMethodCallIgnored

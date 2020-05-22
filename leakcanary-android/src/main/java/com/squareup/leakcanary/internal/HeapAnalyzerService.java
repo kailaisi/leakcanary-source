@@ -30,9 +30,9 @@ import com.squareup.leakcanary.R;
 import static com.squareup.leakcanary.internal.LeakCanaryInternals.setEnabledBlocking;
 
 /**
- * This service runs in a separate process to avoid slowing down the app process or making it run
- * out of memory.
+ * This service runs in a separate process to avoid slowing down the app process or making it run out of memory.
  */
+//此服务在单独的进程中运行，以避免减慢应用程序进程或使其耗尽内存。
 public final class HeapAnalyzerService extends ForegroundService
     implements AnalyzerProgressListener {
 
@@ -44,8 +44,10 @@ public final class HeapAnalyzerService extends ForegroundService
     setEnabledBlocking(context, HeapAnalyzerService.class, true);
     setEnabledBlocking(context, listenerServiceClass, true);
     Intent intent = new Intent(context, HeapAnalyzerService.class);
+    //这里的listenerServiceClass是DisplayLeakService
     intent.putExtra(LISTENER_CLASS_EXTRA, listenerServiceClass.getName());
     intent.putExtra(HEAPDUMP_EXTRA, heapDump);
+    //启动一个前台的服务，启动时，会调用onHandleIntent方法，该方法在父类中实现了。实现中会调用onHandleIntentInForeground()方法
     ContextCompat.startForegroundService(context, intent);
   }
 
@@ -60,12 +62,11 @@ public final class HeapAnalyzerService extends ForegroundService
     }
     String listenerClassName = intent.getStringExtra(LISTENER_CLASS_EXTRA);
     HeapDump heapDump = (HeapDump) intent.getSerializableExtra(HEAPDUMP_EXTRA);
-
-    HeapAnalyzer heapAnalyzer =
-        new HeapAnalyzer(heapDump.excludedRefs, this, heapDump.reachabilityInspectorClasses);
-
-    AnalysisResult result = heapAnalyzer.checkForLeak(heapDump.heapDumpFile, heapDump.referenceKey,
-        heapDump.computeRetainedHeapSize);
+    //创建一个分析器
+    HeapAnalyzer heapAnalyzer = new HeapAnalyzer(heapDump.excludedRefs, this, heapDump.reachabilityInspectorClasses);
+    //**重点分析方法***分析内存泄漏结果
+    AnalysisResult result = heapAnalyzer.checkForLeak(heapDump.heapDumpFile, heapDump.referenceKey,heapDump.computeRetainedHeapSize);
+    //调用接口，将结果回调给DisplayLeakService来进行处理
     AbstractAnalysisResultService.sendResultToListener(this, listenerClassName, heapDump, result);
   }
 

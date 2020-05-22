@@ -604,6 +604,7 @@ public enum AndroidExcludedRefs {
    * in AOSP or manufacturer forks of AOSP. In such cases, there is very little we can do as app
    * developers except by resorting to serious hacks, so we remove the noise caused by those leaks.
    */
+  //由于Android的AOSP本身可能会存在内存泄漏的东西，所以对于这些东西默认是不会进行提醒的。
   public static @NonNull ExcludedRefs.Builder createAppDefaults() {
     return createBuilder(EnumSet.allOf(AndroidExcludedRefs.class));
   }

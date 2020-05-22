@@ -19,6 +19,9 @@ public final class AndroidRefWatcherBuilder extends RefWatcherBuilder<AndroidRef
   private final Context context;
   private boolean watchActivities = true;
   private boolean watchFragments = true;
+  /**
+   * 是否允许显示内存泄漏的Activity
+   */
   private boolean enableDisplayLeakActivity = false;
 
   AndroidRefWatcherBuilder(@NonNull Context context) {
@@ -29,8 +32,8 @@ public final class AndroidRefWatcherBuilder extends RefWatcherBuilder<AndroidRef
    * Sets a custom {@link AbstractAnalysisResultService} to listen to analysis results. This
    * overrides any call to {@link #heapDumpListener(HeapDump.Listener)}.
    */
-  public @NonNull AndroidRefWatcherBuilder listenerServiceClass(
-      @NonNull Class<? extends AbstractAnalysisResultService> listenerServiceClass) {
+  //设置一个类用来监听分析的结果。
+  public @NonNull AndroidRefWatcherBuilder listenerServiceClass(@NonNull Class<? extends AbstractAnalysisResultService> listenerServiceClass) {
     enableDisplayLeakActivity = DisplayLeakService.class.isAssignableFrom(listenerServiceClass);
     //创建一个服务，来进行堆栈的监听
     return heapDumpListener(new ServiceHeapDumpListener(context, listenerServiceClass));
@@ -85,18 +88,22 @@ public final class AndroidRefWatcherBuilder extends RefWatcherBuilder<AndroidRef
    *
    * @throws UnsupportedOperationException if called more than once per Android process.
    */
+  //根据对应的设置信息，返回一个RefWatcher对象
   public @NonNull RefWatcher buildAndInstall() {
     if (LeakCanaryInternals.installedRefWatcher != null) {
       throw new UnsupportedOperationException("buildAndInstall() should only be called once.");
     }
     RefWatcher refWatcher = build();
     if (refWatcher != DISABLED) {
+      //如果允许显示内存泄漏Activity，则进行处理
       if (enableDisplayLeakActivity) {
         LeakCanaryInternals.setEnabledAsync(context, DisplayLeakActivity.class, true);
       }
+      //如果设置了监听Activity，那么就为Activity注册生命周期监听
       if (watchActivities) {
         ActivityRefWatcher.install(context, refWatcher);
       }
+      //如果设置了监听Fragment，那么就为Fragment注册生命周期监听
       if (watchFragments) {
         FragmentRefWatcher.Helper.install(context, refWatcher);
       }
@@ -110,8 +117,8 @@ public final class AndroidRefWatcherBuilder extends RefWatcherBuilder<AndroidRef
   }
 
   @Override protected @NonNull HeapDumper defaultHeapDumper() {
-    LeakDirectoryProvider leakDirectoryProvider =
-        LeakCanaryInternals.getLeakDirectoryProvider(context);
+    //内存泄漏的路径
+    LeakDirectoryProvider leakDirectoryProvider = LeakCanaryInternals.getLeakDirectoryProvider(context);
     return new AndroidHeapDumper(context, leakDirectoryProvider);
   }
 
