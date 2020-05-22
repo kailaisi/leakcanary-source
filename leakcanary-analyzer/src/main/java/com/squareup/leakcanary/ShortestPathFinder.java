@@ -78,7 +78,7 @@ final class ShortestPathFinder {
   Result findPath(Snapshot snapshot, Instance leakingRef) {
     clearState();
     canIgnoreStrings = !isString(leakingRef);
-
+    //将快照文件进行解析处理，然后将相关信息放入到队列中
     enqueueGcRoots(snapshot);
 
     boolean excludingKnownLeaks = false;

@@ -64,6 +64,7 @@ public final class ActivityRefWatcher {
 
     public void watchActivities() {
         // Make sure you don't get installed twice.
+        //把以前注册的监听器都移除掉，否则会进行两次回调的处理
         stopWatchingActivities();
         application.registerActivityLifecycleCallbacks(lifecycleCallbacks);
     }

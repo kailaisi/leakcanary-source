@@ -37,14 +37,20 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class RefWatcher {
 
     public static final RefWatcher DISABLED = new RefWatcherBuilder<>().build();
-
+    //用于执行内存泄漏的检测
     private final WatchExecutor watchExecutor;
+    //查询正在调试中，如果正在调试，那么不会进行检查的判断
     private final DebuggerControl debuggerControl;
+    //在确定泄漏之前，会执行一次gc
     private final GcTrigger gcTrigger;
+    //用于dump出内存泄漏对应的堆信息
     private final HeapDumper heapDumper;
     private final HeapDump.Listener heapdumpListener;
+    //建造者模式，用于构造对应的heapDumper
     private final HeapDump.Builder heapDumpBuilder;
+    //要检测的内存所对应的key的集合
     private final Set<String> retainedKeys;
+    //弱引用所关联的queue
     private final ReferenceQueue<Object> queue;
 
     RefWatcher(WatchExecutor watchExecutor, DebuggerControl debuggerControl, GcTrigger gcTrigger,
@@ -65,6 +71,7 @@ public final class RefWatcher {
      * @see #watch(Object, String)
      */
     public void watch(Object watchedReference) {
+        //重载方法
         watch(watchedReference, "");
     }
 
@@ -123,7 +130,7 @@ public final class RefWatcher {
         long watchDurationMs = NANOSECONDS.toMillis(gcStartNanoTime - watchStartNanoTime);
         //移除已经回收的监控对象
         removeWeaklyReachableReferences();
-
+        //如果当前是debug状态，则直接返回retry
         if (debuggerControl.isDebuggerAttached()) {
             // The debugger can create false leaks.
             return RETRY;
@@ -140,7 +147,7 @@ public final class RefWatcher {
             //如果仍然没有回收
             long startDumpHeap = System.nanoTime();
             long gcDurationMs = NANOSECONDS.toMillis(startDumpHeap - gcStartNanoTime);
-            //dump出Head文件
+            //dump出hprof文件
             File heapDumpFile = heapDumper.dumpHeap();
             if (heapDumpFile == RETRY_LATER) {
                 // Could not dump the heap.

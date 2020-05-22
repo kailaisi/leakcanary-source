@@ -62,7 +62,7 @@ public final class HeapAnalyzerService extends ForegroundService
     }
     String listenerClassName = intent.getStringExtra(LISTENER_CLASS_EXTRA);
     HeapDump heapDump = (HeapDump) intent.getSerializableExtra(HEAPDUMP_EXTRA);
-    //创建一个分析器
+    //创建一个堆分析器
     HeapAnalyzer heapAnalyzer = new HeapAnalyzer(heapDump.excludedRefs, this, heapDump.reachabilityInspectorClasses);
     //**重点分析方法***分析内存泄漏结果
     AnalysisResult result = heapAnalyzer.checkForLeak(heapDump.heapDumpFile, heapDump.referenceKey,heapDump.computeRetainedHeapSize);
