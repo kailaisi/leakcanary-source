@@ -32,10 +32,10 @@ public final class AndroidRefWatcherBuilder extends RefWatcherBuilder<AndroidRef
    * Sets a custom {@link AbstractAnalysisResultService} to listen to analysis results. This
    * overrides any call to {@link #heapDumpListener(HeapDump.Listener)}.
    */
-  //设置一个类用来监听分析的结果。
+  //设置一个监听者用来监听分析的结果。
   public @NonNull AndroidRefWatcherBuilder listenerServiceClass(@NonNull Class<? extends AbstractAnalysisResultService> listenerServiceClass) {
     enableDisplayLeakActivity = DisplayLeakService.class.isAssignableFrom(listenerServiceClass);
-    //创建一个服务，来进行堆栈的监听
+    //设置一个监听者,用来分析泄漏的结果以及发送通知消息
     return heapDumpListener(new ServiceHeapDumpListener(context, listenerServiceClass));
   }
 
@@ -93,6 +93,7 @@ public final class AndroidRefWatcherBuilder extends RefWatcherBuilder<AndroidRef
     if (LeakCanaryInternals.installedRefWatcher != null) {
       throw new UnsupportedOperationException("buildAndInstall() should only be called once.");
     }
+    //通过构造者模式中的build()方法创建一个RefWatcher对象,这里面会有很多默认的设置
     RefWatcher refWatcher = build();
     if (refWatcher != DISABLED) {
       //如果允许显示内存泄漏Activity，则进行处理

@@ -40,9 +40,11 @@ public final class LeakCanary {
      */
     public static @NonNull
     RefWatcher install(@NonNull Application application) {
-        return refWatcher(application)
-				.listenerServiceClass(DisplayLeakService.class)
+        return refWatcher(application)//创建一个Android端使用的引用监控的构造者
+                .listenerServiceClass(DisplayLeakService.class)
+                //设置不进行监控的类引用对象
                 .excludedRefs(AndroidExcludedRefs.createAppDefaults().build())
+                //创建对于引用的监控
                 .buildAndInstall();
     }
 
@@ -60,7 +62,7 @@ public final class LeakCanary {
         return refWatcher;
     }
 
-	//创建一个AndroidRefWatcherBuilder对象
+    //创建一个AndroidRefWatcherBuilder对象
     public static @NonNull
     AndroidRefWatcherBuilder refWatcher(@NonNull Context context) {
         return new AndroidRefWatcherBuilder(context);

@@ -21,6 +21,7 @@ public class RefWatcherBuilder<T extends RefWatcherBuilder<T>> {
   }
 
   /** @see HeapDump.Listener */
+  //HeapDump的监听者
   public final T heapDumpListener(HeapDump.Listener heapDumpListener) {
     this.heapDumpListener = heapDumpListener;
     return self();
@@ -74,6 +75,7 @@ public class RefWatcherBuilder<T extends RefWatcherBuilder<T>> {
 
   /** Creates a {@link RefWatcher}. */
   public final RefWatcher build() {
+    //如果设置不启动监控，那么直接返回
     if (isDisabled()) {
       return RefWatcher.DISABLED;
     }

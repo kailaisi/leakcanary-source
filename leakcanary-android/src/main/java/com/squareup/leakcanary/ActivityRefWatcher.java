@@ -27,7 +27,7 @@ import com.squareup.leakcanary.internal.ActivityLifecycleCallbacksAdapter;
  * {@link AndroidRefWatcherBuilder#watchActivities} should be used instead.
  * We will make this class internal in the next major version.
  */
-//用于处理对于Activity的处理
+//用于当Activity执行了onDestroy以后，将引用加入到监控队列中
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public final class ActivityRefWatcher {

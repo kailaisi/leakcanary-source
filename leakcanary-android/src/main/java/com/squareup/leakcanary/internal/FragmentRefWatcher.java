@@ -32,6 +32,7 @@ import static android.os.Build.VERSION_CODES.O;
 /**
  * Internal class used to watch for fragments leaks.
  */
+//用于监视Fragment泄漏的内部类。
 public interface FragmentRefWatcher {
 
     void watchFragments(Activity activity);
@@ -60,15 +61,14 @@ public interface FragmentRefWatcher {
                 fragmentRefWatchers.add(supportFragmentRefWatcher);
             } catch (Exception ignored) {
             }
-
-
+            //如果没有Fragment的监控者，那么直接返回
             if (fragmentRefWatchers.size() == 0) {
                 return;
             }
-
+            //创建Helper实例
             Helper helper = new Helper(fragmentRefWatchers);
-
             Application application = (Application) context.getApplicationContext();
+            //注册Activity的生命周期回调
             application.registerActivityLifecycleCallbacks(helper.activityLifecycleCallbacks);
         }
 

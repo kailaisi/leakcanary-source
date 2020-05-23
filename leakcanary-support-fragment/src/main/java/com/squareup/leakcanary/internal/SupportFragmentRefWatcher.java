@@ -38,19 +38,21 @@ class SupportFragmentRefWatcher implements FragmentRefWatcher {
                 public void onFragmentViewDestroyed(FragmentManager fm, Fragment fragment) {
                     View view = fragment.getView();
                     if (view != null) {
-                        //当fragment销毁的时候，开始监听
+                        //当fragment的view销毁的时候，开始监控
                         refWatcher.watch(view);
                     }
                 }
 
                 @Override
                 public void onFragmentDestroyed(FragmentManager fm, Fragment fragment) {
+                    //当fragment销毁的时候，开始监控
                     refWatcher.watch(fragment);
                 }
             };
 
     @Override
     public void watchFragments(Activity activity) {
+        //V4包中的Fragment，必须使用FragmentActivity来进行处理
         if (activity instanceof FragmentActivity) {
             FragmentManager supportFragmentManager = ((FragmentActivity) activity).getSupportFragmentManager();
             supportFragmentManager.registerFragmentLifecycleCallbacks(fragmentLifecycleCallbacks, true);
