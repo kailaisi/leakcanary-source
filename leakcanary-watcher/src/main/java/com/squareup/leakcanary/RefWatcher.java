@@ -96,6 +96,7 @@ public final class RefWatcher {
         retainedKeys.add(key);
         //创建一个弱引用，指向要检测的对象。
         //如果这个弱引用被回收，那么会将reference加入到queue队列中
+        //这里之所以创建了一个key，就是为了防止多次启动A页面，然后销毁。无法分清到底是哪一个导致的内存泄漏。现在通过生成的key就可以进行区分了
         final KeyedWeakReference reference = new KeyedWeakReference(watchedReference, key, referenceName, queue);
         //判断reference是否被回收
         ensureGoneAsync(watchStartNanoTime, reference);
@@ -144,8 +145,9 @@ public final class RefWatcher {
         //再次移除已经回收的监控对象
         removeWeaklyReachableReferences();
         if (!gone(reference)) {
-            //如果仍然没有回收
+            //如果仍然没有回收，证明发生了内存泄漏
             long startDumpHeap = System.nanoTime();
+            //gc执行的时长
             long gcDurationMs = NANOSECONDS.toMillis(startDumpHeap - gcStartNanoTime);
             //dump出hprof文件
             File heapDumpFile = heapDumper.dumpHeap();
@@ -154,7 +156,7 @@ public final class RefWatcher {
                 //不能生成快照文件的话，进行重试
                 return RETRY;
             }
-            //生成文件消耗的的时间
+            //生成hprof文件消耗的的时间
             long heapDumpDurationMs = NANOSECONDS.toMillis(System.nanoTime() - startDumpHeap);
             HeapDump heapDump = heapDumpBuilder.heapDumpFile(heapDumpFile).referenceKey(reference.key)
                     .referenceName(reference.name)
