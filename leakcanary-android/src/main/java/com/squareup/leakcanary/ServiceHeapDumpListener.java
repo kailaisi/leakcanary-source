@@ -32,7 +32,8 @@ public final class ServiceHeapDumpListener implements HeapDump.Listener {
     this.context = checkNotNull(context, "context").getApplicationContext();
   }
 
-  @Override public void analyze(@NonNull HeapDump heapDump) {
+  @Override
+  public void analyze(@NonNull HeapDump heapDump) {
     checkNotNull(heapDump, "heapDump");
     HeapAnalyzerService.runAnalysis(context, heapDump, listenerServiceClass);
   }

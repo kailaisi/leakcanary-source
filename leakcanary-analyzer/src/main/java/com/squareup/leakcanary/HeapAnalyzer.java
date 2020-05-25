@@ -150,8 +150,7 @@ public final class HeapAnalyzer {
      */
     @Deprecated
     public @NonNull
-    AnalysisResult checkForLeak(@NonNull File heapDumpFile,
-                                @NonNull String referenceKey) {
+    AnalysisResult checkForLeak(@NonNull File heapDumpFile, @NonNull String referenceKey) {
         return checkForLeak(heapDumpFile, referenceKey, true);
     }
 

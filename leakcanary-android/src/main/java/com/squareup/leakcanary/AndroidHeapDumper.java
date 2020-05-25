@@ -75,10 +75,10 @@ public final class AndroidHeapDumper implements HeapDumper {
       //创建失败了，等会再重试
       return RETRY_LATER;
     }
-
     FutureResult<Toast> waitingForToast = new FutureResult<>();
+    //通过Handler机制在主线程显示Toast，使用了CountDownLatch机制。显示Toast的时候会将其数值修改为0，
     showToast(waitingForToast);
-
+    //这里会等待主线程显示Toast，也就是CountDownLatch变为0。然后就可以继续后面的操作
     if (!waitingForToast.wait(5, SECONDS)) {
       CanaryLog.d("Did not dump heap, too much time waiting for Toast.");
       return RETRY_LATER;
@@ -93,8 +93,9 @@ public final class AndroidHeapDumper implements HeapDumper {
 
     Toast toast = waitingForToast.get();
     try {
-      //heap堆的快照，可以获知程序的哪些部分正在使用大部分的内存
+      //创建heap堆的快照信息，可以获知程序的哪些部分正在使用大部分的内存
       Debug.dumpHprofData(heapDumpFile.getAbsolutePath());
+      //关闭Toask和Notification通知
       cancelToast(toast);
       notificationManager.cancel(notificationId);
       return heapDumpFile;
@@ -105,6 +106,7 @@ public final class AndroidHeapDumper implements HeapDumper {
     }
   }
 
+  //这里使用CountDownLatch实现主线程和子线程之间的同步。在主线程中
   private void showToast(final FutureResult<Toast> waitingForToast) {
     mainHandler.post(new Runnable() {
       @Override public void run() {
