@@ -189,7 +189,7 @@ public final class HeapAnalyzer {
                 String className = leakingRef.getClassObj().getClassName();
                 return noLeak(className, since(analysisStartNanoTime));
             }
-            //检测泄漏的路径，并将检测的结果进行返回
+            //检测泄漏的最短路径，并将检测的结果进行返回
             return findLeakTrace(analysisStartNanoTime, snapshot, leakingRef, computeRetainedSize);
         } catch (Throwable e) {
             return failure(e, since(analysisStartNanoTime));
@@ -255,6 +255,7 @@ public final class HeapAnalyzer {
     private AnalysisResult findLeakTrace(long analysisStartNanoTime, Snapshot snapshot, Instance leakingRef, boolean computeRetainedSize) {
 
         listener.onProgressUpdate(FINDING_SHORTEST_PATH);
+        //最短路径搜索器
         ShortestPathFinder pathFinder = new ShortestPathFinder(excludedRefs);
         //获取到内存泄漏的对象的路径
         ShortestPathFinder.Result result = pathFinder.findPath(snapshot, leakingRef);

@@ -103,10 +103,7 @@ public final class LeakCanary {
      * Returns a string representation of the result of a heap analysis.
      */
     public static @NonNull
-    String leakInfo(@NonNull Context context,
-                    @NonNull HeapDump heapDump,
-                    @NonNull AnalysisResult result,
-                    boolean detailed) {
+    String leakInfo(@NonNull Context context,@NonNull HeapDump heapDump,@NonNull AnalysisResult result, boolean detailed) {
         PackageManager packageManager = context.getPackageManager();
         String packageName = context.getPackageName();
         PackageInfo packageInfo;

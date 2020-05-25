@@ -40,12 +40,12 @@ import static com.squareup.leakcanary.internal.LeakCanaryInternals.classSimpleNa
 //负责发起 Notification 以及将结果记录下来写在文件里面
 public class DisplayLeakService extends AbstractAnalysisResultService {
 
-    //对内存泄漏的堆信息的分析
+    //对内存泄漏的堆信息进行分析
     @Override
     protected final void onHeapAnalyzed(@NonNull AnalyzedHeap analyzedHeap) {
         HeapDump heapDump = analyzedHeap.heapDump;
         AnalysisResult result = analyzedHeap.result;
-
+        //根据泄漏的信息，生成提示的String字符串
         String leakInfo = leakInfo(this, heapDump, result, true);
         CanaryLog.d("%s", leakInfo);
         //重命名.hprof文件
@@ -87,7 +87,6 @@ public class DisplayLeakService extends AbstractAnalysisResultService {
         } else {
             onAnalysisResultFailure(getString(R.string.leak_canary_could_not_save_text));
         }
-
         afterDefaultHandling(heapDump, result, leakInfo);
     }
 

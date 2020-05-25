@@ -79,6 +79,7 @@ final class ShortestPathFinder {
     clearState();
     canIgnoreStrings = !isString(leakingRef);
     //将快照文件进行解析处理，然后将相关信息放入到队列中
+    //搜索队列里增加GCRoot
     enqueueGcRoots(snapshot);
 
     boolean excludingKnownLeaks = false;
@@ -96,6 +97,7 @@ final class ShortestPathFinder {
       }
 
       // Termination
+      // 找到泄漏点 跳出循环
       if (node.instance == leakingRef) {
         leakingNode = node;
         break;
